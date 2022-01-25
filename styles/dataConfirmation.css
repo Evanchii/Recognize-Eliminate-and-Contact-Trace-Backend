@@ -1,0 +1,28 @@
+.content {
+    padding: 3% 0%;
+}
+
+.pfp {
+    object-fit: cover;
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+}
+
+.side-by-side {
+    width: 100%;
+    display: inline-grid;
+    grid-template-columns: 50vw 50vw;
+    align-items: center;
+    justify-items: center;
+}
+
+.details {
+    border: 1px solid black;
+    width: 30vw;
+    padding: 3% 0%;
+}
+
+th {
+    text-align: left;
+}

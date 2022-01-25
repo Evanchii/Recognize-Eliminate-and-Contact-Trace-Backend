@@ -7,7 +7,7 @@ if(isset($_SESSION['uid'])) {
     header('Location: pages/dashboard.php');
 }
 
-if(isset($_POST['submit'])) {
+if(isset($_POST['login'])) {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
@@ -26,15 +26,18 @@ if(isset($_POST['submit'])) {
             $verIdToken = $auth->verifyIdToken($token);
             $uid = $verIdToken->claims()->get('sub');
 
-            $reference = $database->getReference("Users/" . $uid . "/info/Type");
-            $type = $reference->getValue();
+            $reference = $database->getReference("Users/" . $uid . "/info");
+            $type = $reference->getChild('Type')->getValue();
 
-            if($type == "User" || $type == "LGU") {
+            $_SESSION['uid'] = $uid;
+            $_SESSION['token'] = $token;
+
+            if($type == "visitor" || $type == "admin") {
                 echo('<script>alert("User isn\'t permitted to use the module!");</script>');
+                // header('Location: pages/logout.php');
             } else {
-                $_SESSION['uid'] = $uid;
-                $_SESSION['token'] = $token;
                 $_SESSION['type'] = $type;
+                $_SESSION['estName'] = $reference->getChild('name')->getValue();
 
                 header('Location: pages/dashboard.php');
             }
@@ -53,88 +56,10 @@ if(isset($_POST['submit'])) {
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Login - REaCT</title>
+        <title>Login | REaCT-Core</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-            @import url('https://fonts.googleapis.com/css2?family=Asap:wght@400;500&family=Quicksand:wght@400;500&display=swap');
-            
-            * {
-                font-family: 'Asap', sans-serif;
-                font-family: 'Quicksand', sans-serif;
-            }
-
-            body {
-                background-image: radial-gradient(#b5b5b5 10%, transparent 0%);
-                background-color: #e0e0e0;
-                background-position: 0 0, 50px 50px;
-                background-size: 20px 20px;
-            }
-
-            .center {
-                text-align: center;
-            }
-
-            .end {
-                text-align: right;
-            }
-
-            .container {
-                background: white;
-                width: 50vw;
-                height: auto;
-                margin: 20vh auto;
-                padding: 3% 1%;
-                box-shadow: 0px 0px 8px 0px rgba(0,0,0,0.75);
-                -webkit-box-shadow: 0px 0px 8px 0px rgba(0,0,0,0.75);
-                -moz-box-shadow: 0px 0px 8px 0px rgba(0,0,0,0.75);
-                display: grid;
-                grid-template-columns: 50% 50%;
-                justify-items: stretch;
-                align-items: center;
-                justify-content: space-evenly;
-                border-radius: 15px;
-            }
-
-            .left {
-                padding: 5%;
-            }
-
-            .left>img {
-                width: 75%;
-            }
-
-            .right {
-                padding: 3%;
-                display: flex;
-                flex-wrap: nowrap;
-                flex-direction: column;
-                align-items: center;
-            }
-
-            form>input {
-                width: 100%;
-            }
-
-            .right>img {
-                width: 50%;
-            }
-
-            a {
-                text-decoration: none;
-            }
-
-            @media (width: 480px), (orientation: portrait) {
-                .container {
-                    width: 75vw;
-                    margin: 15vh auto;
-                    display: block;
-                }
-                
-                .left>img {
-                    width: 20vw;
-                }
-            }
-        </style>
+        <link rel="stylesheet" href="styles/public-common.css">
+        <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
     </head>
     <body>
     <div class="container">
@@ -145,13 +70,20 @@ if(isset($_POST['submit'])) {
                 <img src="assets/text-logo.png" alt="REaCT Login">
                 <form action="index.php" method="POST">
                     <p>Username</p>
-                    <input type="text" name="username" placeholder="company_username" required>
+                    <input type="text" id="email" name="username" placeholder="company_username" required>
                     <p>Password</p>
-                    <input type="password" name="password"placeholder="••••••••" required>
-                    <p class="center"><input type="submit" name="inSubmit" value="Log in"></p>
-                    <a href="pages/dashboard.php">DEBUG: LOGIN</a>
+                    <input type="password" id="password" name="password"placeholder="••••••••" required>
+                    <p class="center"><input type="submit" name="login" value="Log in"></p>
+                    <!-- TODO: Remove before production -->
+                    <!-- <a onclick="debugAcct()">DEBUG: LOGIN</a> -->
+                    <script>
+                        function debugAcct() {
+                            document.getElementById('email').value = "establishment@react-app.ga"
+                            document.getElementById('password').value = "REaCT2021"
+                        }
+                    </script>
                     <!-- TODO: Change HREF value to front-end when uploading to web -->
-                    <p>Don't have an account? <a href="../REaCT-Web/">Return to web</a></p>
+                    <p>Don't have an account? <a href="https://react-app.ga/">Return to web</a></p>
                 </form>
 
             </div>
