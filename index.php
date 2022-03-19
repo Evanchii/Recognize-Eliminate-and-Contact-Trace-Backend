@@ -13,9 +13,11 @@ if(isset($_POST['login'])) {
 
     if(!(str_contains($username, '@') && str_contains($username, '.'))) {
         $_SESSION['username'] = $username;
-        $username .= "@core.react.ga";
+        $username .= "@core.react-app.ga";
     } else {
+        //alca.castillo@gmail.com
         $pieces = explode("@", $username);
+        //['alca.castillo','gmail.com']
         $_SESSION['username'] = $pieces[0];
     }
 
@@ -36,6 +38,12 @@ if(isset($_POST['login'])) {
                 echo('<script>alert("User isn\'t permitted to use the module!");</script>');
                 // header('Location: pages/logout.php');
             } else {
+                if($type=='establishment') {
+                    $_SESSION['username'] = $reference->getChild('name')->getValue();
+                } else {
+                    // $_SESSION['username'] = $reference->getChild('username')->getValue();
+                }
+                $_SESSION['branch'] = $reference->getChild('branch')->getValue();
                 $_SESSION['type'] = $type;
                 $_SESSION['estName'] = $reference->getChild('name')->getValue();
 

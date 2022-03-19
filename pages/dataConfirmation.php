@@ -1,49 +1,59 @@
-<?php 
+<?php
 include '../includes/dbconfig.php';
 date_default_timezone_set('Asia/Manila');
 session_start();
 
-if(isset($_POST["accept"])) {
-    echo '<pre>';
-    var_dump($_POST);
-    echo '</pre>';
+$infoRef = $database->getReference('Users/' . $_SESSION['uid'] . '/info');
+$main = $_SESSION['type'] == 'establishment' ? $_SESSION['uid'] : $infoRef->getChild('main')->getValue();
+
+if (isset($_POST["date"])) {
     $date = $_POST["date"];
     $time = $_POST["time"];
     $uid = $_SESSION["loggedUID"];
     $estName = $_SESSION["estName"];
-    $timestamp = $_POST["timestamp"];
+    $timestamp = time();
 
-    $database->getReference('History/'.$date)->update(
+    $visRef = $database->getReference('Users/' . $uid);
+    $mainRef = $database->getReference('Users/' . $main);
+
+    $fn = $visRef->getChild('info/fName')->getValue();
+    $mn = $visRef->getChild('info/mName')->getValue();
+    $ln = $visRef->getChild('info/lName')->getValue();
+
+    $database->getReference('History/' . $date)->update(
         [
             $timestamp => [
-                'time' => $time,
+                'branch' => $_SESSION['branch'],
                 'date' => $date,
-                'uid' => $uid,
                 'estName' => $estName,
+                'estUID' => $main,
+                'name' => $ln . ', ' . $fn . ' ' . $mn,
+                'sub' => $_SESSION['username'],
+                'time' => $time,
+                'uid' => $uid,
             ],
         ]
     );
 
-    $database->getReference('Users/'.$uid.'/history/'.$date)->update(
+    $visRef->getChild('history/' . $date)->update(
         [
             $timestamp => $timestamp,
         ],
     );
 
-    // TO-DO: Establishment History Key
+    $mainRef->getChild('history/' . $date)->update(
+        [
+            $timestamp => $timestamp,
+        ],
+    );
 
     $_SESSION["loggedUID"] = "";
-    header('Location: faceCapturing.php');
     echo "<script>alert('Data Recorded');</script>";
-} elseif(isset($_POST["decline"])) {
-    $_SESSION["loggedUID"] = "";
-    header('Location: faceCapturing.php');
+    exit();
 }
 
 $uid = $_SESSION["loggedUID"];
 $reference = $database->getReference("Users/" . $uid . "/info");
-
-// echo($reference->getChild("faceID")->getValue());
 
 $storage = $firebase->createStorage();
 $storageClient = $storage->getStorageClient();
@@ -51,14 +61,11 @@ $defaultBucket = $storage->getBucket();
 
 
 $expiresAt = new DateTime('tomorrow', new DateTimeZone('Asia/Manila'));
-// echo $expiresAt->getTimestamp();
 
 $imageReference = $defaultBucket->object($reference->getChild("faceID")->getValue());
-if ($imageReference -> exists()) {
-    $image = $imageReference -> signedUrl($expiresAt);
+if ($imageReference->exists()) {
+    $image = $imageReference->signedUrl($expiresAt);
 }
-
-// echo($image);
 ?>
 <!DOCTYPE html>
 <html>
@@ -86,16 +93,16 @@ if ($imageReference -> exists()) {
                 <?php echo $reference->getChild("lName")->getValue() . ", " . $reference->getChild("fName")->getValue(); ?>
             </h2>
             <h4>
-                <?php 
-                    echo $reference->getChild("addNo")->getValue() . ", " . $reference->getChild("addBa")->getValue() . "<br/>";
-                    echo $reference->getChild("addCi")->getValue() . ", ". $reference->getChild("addPro")->getValue() . "<br/>";
-                    echo $reference->getChild("addCo")->getValue() . " " . $reference->getChild("addZip")->getValue();
+                <?php
+                echo $reference->getChild("addNo")->getValue() . ", " . $reference->getChild("addBa")->getValue() . "<br/>";
+                echo $reference->getChild("addCi")->getValue() . ", " . $reference->getChild("addPro")->getValue() . "<br/>";
+                echo $reference->getChild("addCo")->getValue() . " " . $reference->getChild("addZip")->getValue();
                 ?>
             </h4>
         </div>
         <div>
             <h1>Entry</h1>
-            <form action="dataConfirmation.php" method="POST">
+            <form action="dataConfirmation.php" method="POST" id="dataForm">
                 <table class="details">
                     <tr>
                         <th>Establishment</th>
@@ -106,26 +113,22 @@ if ($imageReference -> exists()) {
                     <tr>
                         <th>Date</th>
                         <td>
-                            <input type="date" name="date" id="date" value="<?php echo date("Y-m-d"); ?>"
-                                readonly="readonly">
+                            <input type="date" name="date" id="date" value="<?php echo date("Y-m-d"); ?>" readonly="readonly">
                         </td>
                     </tr>
                     <tr>
                         <th>Time</th>
                         <td>
-                            <input type="time" name="time" id="time" value="<?php echo date("H:i:s");?>"
-                                readonly="readonly">
+                            <input type="time" name="time" id="time" value="<?php echo date("H:i:s"); ?>" readonly="readonly">
                             <input type="hidden" name="timestamp" id="timestamp">
                         </td>
                     </tr>
                 </table>
                 <div style="display: inline-flex; width: 60%; justify-content: space-around; margin: 5% 3%">
                     <script>
-                    document.getElementById("timestamp").value = Date.now();
+                        document.getElementById("timestamp").value = Date.now();
                     </script>
-                    <input type="submit" value="Accept" name="accept">
             </form>
-            <form action="dataConfirmation.php" method="POST"><input type="submit" value="Decline" name="decline">
             </form>
         </div>
     </div>
@@ -136,6 +139,20 @@ if ($imageReference -> exists()) {
     <!-- jQuery Modal -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.css" />
+    <script>
+        console.log('preparing transmission');
+        setTimeout(function() {
+            console.log('transmitting');
+            $.ajax({
+                url: "dataConfirmation.php",
+                type: "POST",
+                data: $('#dataForm').serialize(),
+            }).done(function(data) {
+                console.log(data);
+                // window.location.href = 'faceCapturing.php';
+            });
+        }, 10000);
+    </script>
 </body>
 
 </html>

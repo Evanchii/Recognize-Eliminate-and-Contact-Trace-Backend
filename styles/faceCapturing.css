@@ -35,3 +35,12 @@
     display: block;
     background: #fff;
 }
+
+#capture {
+    background: #28A745;
+    color: white;
+    margin: 1%;
+    padding: 1% 3%;
+    border: none;
+    border-radius: 7px;
+}
