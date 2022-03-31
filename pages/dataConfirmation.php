@@ -124,6 +124,8 @@ if ($imageReference->exists()) {
                         </td>
                     </tr>
                 </table>
+                <br>
+                <p>The system will redirect you back to the face capturing page in 10 seconds.</p>
                 <div style="display: inline-flex; width: 60%; justify-content: space-around; margin: 5% 3%">
                     <script>
                         document.getElementById("timestamp").value = Date.now();
@@ -149,7 +151,7 @@ if ($imageReference->exists()) {
                 data: $('#dataForm').serialize(),
             }).done(function(data) {
                 console.log(data);
-                // window.location.href = 'faceCapturing.php';
+                window.location.href = 'faceCapturing.php';
             });
         }, 10000);
     </script>
